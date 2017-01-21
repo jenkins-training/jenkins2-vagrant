@@ -1,0 +1,29 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/xenial64"
+
+  config.vbguest.auto_update = false
+
+  config.vm.network "forwarded_port", guest: 8080, host: 8080
+  config.vm.provider "virtualbox" do |vb|
+     vb.memory = "1024"
+  end
+
+  config.vm.provision "shell", inline: <<-SHELL
+    apt-get update
+    apt-get upgrade -y
+    echo "Install Java, Maven, and a few tools"
+    apt-get install -y nano git wget curl openjdk-8-jdk openjdk-8-jdk-headless maven
+
+    if [ ! -d /var/lib/jenkins ]; then
+        wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
+        if [ ! -f /etc/apt/sources.list.d/jenkins.list ]; then
+            echo "deb https://pkg.jenkins.io/debian-stable binary/" >> /etc/apt/sources.list.d/jenkins.list
+        fi
+        apt-get update
+        apt-get install jenkins -y
+    fi
+  SHELL
+end
